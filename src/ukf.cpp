@@ -37,11 +37,11 @@ UKF::UKF()
   P_pred_ = MatrixXd(n_x_, n_x_);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 2.0;//30;
+  std_a_ = 2.0; // 30;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 1.0;//30;
-  
+  std_yawdd_ = 1.0; // 30;
+
   /**
    * DO NOT MODIFY measurement noise values below.
    * These are provided by the sensor manufacturer.
@@ -61,11 +61,11 @@ UKF::UKF()
 
   // Radar measurement noise standard deviation radius change in m/s
   std_radrd_ = 0.3;
-  
+
   /**
-   * End DO NOT MODIFY section for measurement noise values 
+   * End DO NOT MODIFY section for measurement noise values
    */
-  
+
   /**
    * TODO: Complete the initialization. See ukf.h for other member properties.
    * Hint: one or more values initialized above might be wildly off...
@@ -160,8 +160,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
 void UKF::Prediction(double delta_t)
 {
   /**
-   * TODO: Complete this function! Estimate the object's location. 
-   * Modify the state vector, x_. Predict sigma points, the state, 
+   * TODO: Complete this function! Estimate the object's location.
+   * Modify the state vector, x_. Predict sigma points, the state,
    * and the state covariance matrix.
    */
   GenerateAugmentedSigmaPoints();
@@ -181,12 +181,12 @@ void UKF::UpdateLidar(MeasurementPackage meas_package)
   // Measurement matrix for Lidar
   MatrixXd H = MatrixXd(n_z, n_x_);
   H << 1, 0, 0, 0, 0,
-       0, 1, 0, 0, 0;
+      0, 1, 0, 0, 0;
 
   // Measurement noise covariance matrix for Lidar
   MatrixXd R = MatrixXd(n_z, n_z);
   R << std_laspx_ * std_laspx_, 0,
-       0, std_laspy_ * std_laspy_;
+      0, std_laspy_ * std_laspy_;
 
   // Calculate the residual
   VectorXd y = z - H * x_;
@@ -202,15 +202,17 @@ void UKF::UpdateLidar(MeasurementPackage meas_package)
   P_ = P_ - K * H * P_;
 
   // Print the result
-  std::cout << "Updated state x: " << std::endl << x_ << std::endl;
-  std::cout << "Updated state covariance P: " << std::endl << P_ << std::endl;
+  std::cout << "Updated state x: " << std::endl
+            << x_ << std::endl;
+  std::cout << "Updated state covariance P: " << std::endl
+            << P_ << std::endl;
 }
 
 void UKF::UpdateRadar(MeasurementPackage meas_package)
 {
   /**
-   * TODO: Complete this function! Use radar data to update the belief 
-   * about the object's position. Modify the state vector, x_, and 
+   * TODO: Complete this function! Use radar data to update the belief
+   * about the object's position. Modify the state vector, x_, and
    * covariance, P_.
    * You can also calculate the radar NIS, if desired.
    */
