@@ -192,6 +192,10 @@ void UKF::Prediction(double delta_t)
   GenerateAugmentedSigmaPoints();
   PredictSigmaPoints(delta_t);
   PredictMeanAndCovariance();
+
+  // Update the state and covariance matrix with the predicted values
+  x_ = x_pred_;
+  P_ = P_pred_;
 }
 
 void UKF::UpdateLidar(MeasurementPackage meas_package)
