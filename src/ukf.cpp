@@ -9,24 +9,38 @@ using Eigen::VectorXd;
 /**
  * Initializes Unscented Kalman filter
  */
-UKF::UKF() {
+UKF::UKF()
+{
   // if this is false, laser measurements will be ignored (except during init)
   use_laser_ = true;
 
   // if this is false, radar measurements will be ignored (except during init)
   use_radar_ = true;
 
+  n_x_ = 5;
+
+  n_aug_ = 7;
+
   // initial state vector
-  x_ = VectorXd(5);
+  x_ = VectorXd(n_x_);
+  x_.fill(0.0);
+
+  // initial predicted state vector
+  x_pred_ = VectorXd(n_x_);
+  // x_pred_.fill(0.0);
 
   // initial covariance matrix
-  P_ = MatrixXd(5, 5);
+  P_ = MatrixXd(n_x_, n_x_);
+  P_.fill(0.0);
+
+  // initial covariance matrix
+  P_pred_ = MatrixXd(n_x_, n_x_);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 30;
+  std_a_ = 2.0;//30;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 30;
+  std_yawdd_ = 1.0;//30;
   
   /**
    * DO NOT MODIFY measurement noise values below.
@@ -56,6 +70,24 @@ UKF::UKF() {
    * TODO: Complete the initialization. See ukf.h for other member properties.
    * Hint: one or more values initialized above might be wildly off...
    */
+  is_initialized_ = false;
+
+  // set design parameter
+  lambda_ = 3;
+
+  // Xsig_ initialize
+  Xsig_ = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+  Xsig_.fill(0.0);
+
+  // Xsig_pred_ initialize
+  Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
+  Xsig_pred_.fill(0.0);
+
+  // Weights initialize
+  weights_ = VectorXd(2 * n_aug_ + 1);
+  // set weights
+  weights_(0) = lambda_ / (lambda_ + n_aug_);
+  weights_.tail(14).setConstant(1 / (2 * (lambda_ + n_aug_)));
 }
 
 UKF::~UKF() {}
