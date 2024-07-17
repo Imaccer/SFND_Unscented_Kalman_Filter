@@ -24,6 +24,7 @@ class UKF {
 
   void GenerateAugmentedSigmaPoints();
   void PredictSigmaPoints(double delta_t);
+  void PredictMeanAndCovariance();
 
   /**
    * Prediction Predicts sigma points, the state, and the state covariance

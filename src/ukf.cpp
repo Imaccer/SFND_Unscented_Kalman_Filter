@@ -73,6 +73,7 @@ void UKF::Prediction(double delta_t) {
    */
   GenerateAugmentedSigmaPoints();
   PredictSigmaPoints(delta_t);
+  PredictMeanAndCovariance();
 }
 
 void UKF::UpdateLidar(MeasurementPackage meas_package) {
@@ -185,4 +186,26 @@ void UKF::PredictSigmaPoints(double delta_t)
   //           << Xsig_pred_ << std::endl;
 }
 
+void UKF::PredictMeanAndCovariance()
+{
+  // reset predicted mean and covariance to zero
+  x_pred_.fill(0.0);
+  P_pred_.fill(0.0);
+
+  for (int i = 0; i < weights_.size(); i++)
+  {
+    x_pred_ += weights_(i) * Xsig_pred_.col(i);
+  }
+
+  // predict state covariance matrix
+  for (int i = 0; i < weights_.size(); i++)
+  {
+    P_pred_ += weights_(i) * (Xsig_pred_.col(i) - x_pred_) * (Xsig_pred_.col(i) - x_pred_).transpose();
+  }
+
+  // // print result
+  // std::cout << "Predicted state" << std::endl;
+  // std::cout << x_pred_ << std::endl;
+  // std::cout << "Predicted covariance matrix" << std::endl;
+  // std::cout << P_pred_ << std::endl;
 }
