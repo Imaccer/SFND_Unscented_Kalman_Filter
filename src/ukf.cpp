@@ -37,7 +37,7 @@ UKF::UKF()
   P_pred_ = MatrixXd(n_x_, n_x_);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ =3.0; // 30;
+  std_a_ = 3.0; // 30;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
   std_yawdd_ = 0.3; // 30;
@@ -87,7 +87,7 @@ UKF::UKF()
   weights_ = VectorXd(2 * n_aug_ + 1);
   // set weights
   weights_(0) = lambda_ / (lambda_ + n_aug_);
-  weights_.tail(2*n_aug_).setConstant(1 / (2 * (lambda_ + n_aug_)));
+  weights_.tail(2 * n_aug_).setConstant(1 / (2 * (lambda_ + n_aug_)));
 }
 
 UKF::~UKF() {}
@@ -145,11 +145,10 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
       //     0, 0, 0, 0, 1;
 
       P_ << 0.5, 0, 0, 0, 0,
-            0, 0.5, 0, 0, 0,
-            0, 0, 100, 0, 0,
-            0, 0, 0, 100, 0,
-            0, 0, 0, 0, 10;
-      
+          0, 0.5, 0, 0, 0,
+          0, 0, 100, 0, 0,
+          0, 0, 0, 100, 0,
+          0, 0, 0, 0, 10;
     }
     // // set initial covariance matrix
     // P_ << std_laspx_ * std_laspx_, 0, 0, 0, 0,
@@ -237,10 +236,12 @@ void UKF::UpdateLidar(MeasurementPackage meas_package)
             << P_ << std::endl;
 }
 
-
-void UKF::NormalizeAngle(double &angle) {
-  while (angle > M_PI) angle -= 2.0 * M_PI;
-  while (angle < -M_PI) angle += 2.0 * M_PI;
+void UKF::NormalizeAngle(double &angle)
+{
+  while (angle > M_PI)
+    angle -= 2.0 * M_PI;
+  while (angle < -M_PI)
+    angle += 2.0 * M_PI;
 }
 
 void UKF::UpdateRadar(MeasurementPackage meas_package)
@@ -292,15 +293,16 @@ void UKF::UpdateRadar(MeasurementPackage meas_package)
       0, 0, std_radrd_ * std_radrd_;
   S.fill(0.0);
 
-  for (int i = 0; i < 2 * n_aug_ + 1; ++i) {  // 2n+1 simga points
+  for (int i = 0; i < 2 * n_aug_ + 1; ++i)
+  { // 2n+1 simga points
     // residual
     VectorXd z_diff = Zsig_.col(i) - z_pred_;
 
-    NormalizeAngle(z_diff(1));// z(1) is angle phi
+    NormalizeAngle(z_diff(1)); // z(1) is angle phi
 
     S = S + weights_(i) * z_diff * z_diff.transpose();
   }
-  
+
   // for (int i = 0; i < 2 * n_aug_ + 1; i++)
   // {
   //   S += weights_(i) * (Zsig_.col(i) - z_pred_) * (Zsig_.col(i) - z_pred_).transpose();
@@ -321,7 +323,8 @@ void UKF::UpdateRadar(MeasurementPackage meas_package)
   MatrixXd Tc = MatrixXd(n_x_, n_z);
   Tc.fill(0.0);
   // Calculate cross correlation matrix
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+  for (int i = 0; i < 2 * n_aug_ + 1; i++)
+  {
     VectorXd x_diff = Xsig_pred_.col(i) - x_;
     NormalizeAngle(x_diff(3)); // Normalize the angle
 
@@ -446,7 +449,7 @@ void UKF::PredictSigmaPoints(double delta_t)
     v_p = v_p + nu_a * delta_t;
 
     yaw_p = yaw_p + 0.5 * delta_t * delta_t * nu_yawdd;
-   // Normalize the yaw angle
+    // Normalize the yaw angle
     NormalizeAngle(yaw_p);
     yawd_p = yawd_p + delta_t * nu_yawdd;
 
@@ -484,12 +487,11 @@ void UKF::PredictMeanAndCovariance()
     VectorXd x_diff = Xsig_pred_.col(i) - x_pred_;
 
     // Normalize the angles
-    NormalizeAngle(x_diff(3));  // Normalize yaw angle
-    NormalizeAngle(x_diff(4));  // Normalize yaw rate angle (if applicable)
+    NormalizeAngle(x_diff(3)); // Normalize yaw angle
+    NormalizeAngle(x_diff(4)); // Normalize yaw rate angle (if applicable)
 
     P_pred_ += weights_(i) * x_diff * x_diff.transpose();
   }
-
   // // print result
   // std::cout << "Predicted state" << std::endl;
   // std::cout << x_pred_ << std::endl;
