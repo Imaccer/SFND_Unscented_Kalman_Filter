@@ -76,13 +76,41 @@ void UKF::Prediction(double delta_t) {
   PredictMeanAndCovariance();
 }
 
-void UKF::UpdateLidar(MeasurementPackage meas_package) {
-  /**
-   * TODO: Complete this function! Use lidar data to update the belief 
-   * about the object's position. Modify the state vector, x_, and 
-   * covariance, P_.
-   * You can also calculate the lidar NIS, if desired.
-   */
+void UKF::UpdateLidar(MeasurementPackage meas_package)
+{
+  // Lidar measurement dimension is 2: px and py
+  int n_z = 2;
+
+  // Extract the measurement as a vector
+  VectorXd z = VectorXd(n_z);
+  z << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1];
+
+  // Measurement matrix for Lidar
+  MatrixXd H = MatrixXd(n_z, n_x_);
+  H << 1, 0, 0, 0, 0,
+       0, 1, 0, 0, 0;
+
+  // Measurement noise covariance matrix for Lidar
+  MatrixXd R = MatrixXd(n_z, n_z);
+  R << std_laspx_ * std_laspx_, 0,
+       0, std_laspy_ * std_laspy_;
+
+  // Calculate the residual
+  VectorXd y = z - H * x_;
+
+  // Calculate the measurement covariance matrix S
+  MatrixXd S = H * P_ * H.transpose() + R;
+
+  // Calculate the Kalman gain K
+  MatrixXd K = P_ * H.transpose() * S.inverse();
+
+  // Update the state mean and covariance matrix
+  x_ = x_ + K * y;
+  P_ = P_ - K * H * P_;
+
+  // Print the result
+  std::cout << "Updated state x: " << std::endl << x_ << std::endl;
+  std::cout << "Updated state covariance P: " << std::endl << P_ << std::endl;
 }
 
 void UKF::UpdateRadar(MeasurementPackage meas_package)
