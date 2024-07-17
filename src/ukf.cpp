@@ -58,14 +58,73 @@ UKF::UKF() {
 
 UKF::~UKF() {}
 
-void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
+void UKF::ProcessMeasurement(MeasurementPackage meas_package)
+{
   /**
    * TODO: Complete this function! Make sure you switch between lidar and radar
    * measurements.
    */
+  if (!is_initialized_)
+  {
+    // cout << "Kalman Filter Initialization " << endl;
+    // different x initialization depending on type of measurement
+    if (meas_package.sensor_type_ == MeasurementPackage::RADAR)
+    {
+
+      double rho = meas_package.raw_measurements_[0];
+      double phi = meas_package.raw_measurements_[1];
+      double rho_dot = meas_package.raw_measurements_[2];
+
+      // convert radar from polar to cartesian coords
+      double px = rho * cos(phi);
+      double py = rho * sin(phi);
+      double vx = rho_dot * cos(phi);
+      double vy = rho_dot * sin(phi);
+      double v = sqrt(vx * vx + vy * vy);
+
+      // set the state with the initial location and zero velocity
+      x_ << px, py, v, 0, 0;
+    }
+    else if (meas_package.sensor_type_ == MeasurementPackage::LASER)
+    {
+      double px = meas_package.raw_measurements_[0];
+      double py = meas_package.raw_measurements_[1];
+
+      x_ << px, py, 0, 0, 0;
+    }
+    // set initial covariance matrix
+    P_ << std_laspx_ * std_laspx_, 0, 0, 0, 0,
+        0, std_laspy_ * std_laspy_, 0, 0, 0,
+        0, 0, std_radr_ * std_radr_, 0, 0,
+        0, 0, 0, std_radphi_ * std_radphi_, 0,
+        0, 0, 0, 0, std_radrd_ * std_radrd_;
+
+    previous_timestamp_ = meas_package.timestamp_;
+    is_initialized_ = true;
+    return;
+  }
+
+  // compute the time elapsed between the current and previous measurements
+  // dt - expressed in seconds
+  float dt = (meas_package.timestamp_ - previous_timestamp_) / 1000000.0;
+  previous_timestamp_ = meas_package.timestamp_;
+
+  Prediction(dt);
+
+  if (meas_package.sensor_type_ == MeasurementPackage::RADAR)
+  {
+    // Process Radar measurement
+    UpdateRadar(meas_package);
+  }
+  else if (meas_package.sensor_type_ == MeasurementPackage::LASER)
+  {
+    // Process LiDAR measurement
+    UpdateLidar(meas_package);
+  }
 }
 
-void UKF::Prediction(double delta_t) {
+void UKF::Prediction(double delta_t)
+{
   /**
    * TODO: Complete this function! Estimate the object's location. 
    * Modify the state vector, x_. Predict sigma points, the state, 
