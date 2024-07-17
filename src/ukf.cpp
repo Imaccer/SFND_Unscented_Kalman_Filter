@@ -72,6 +72,7 @@ void UKF::Prediction(double delta_t) {
    * and the state covariance matrix.
    */
   GenerateAugmentedSigmaPoints();
+  PredictSigmaPoints(delta_t);
 }
 
 void UKF::UpdateLidar(MeasurementPackage meas_package) {
@@ -129,4 +130,59 @@ void UKF::GenerateAugmentedSigmaPoints()
 
   Xsig_ = Xsig_aug;
 }
+
+void UKF::PredictSigmaPoints(double delta_t)
+{
+  // predict sigma points
+  for (int i = 0; i < 2 * n_aug_ + 1; ++i)
+  {
+    // extract values for each column from Xsig_aug for readability
+    double p_x = Xsig_(0, i);
+    double p_y = Xsig_(1, i);
+    double v = Xsig_(2, i);
+    double yaw = Xsig_(3, i);
+    double yawd = Xsig_(4, i);
+    double nu_a = Xsig_(5, i);
+    double nu_yawdd = Xsig_(6, i);
+
+    // predicted state values
+    double px_p;
+    double py_p;
+
+    // avoid division by zero, sub in the sigma points into CTRV process model
+    if (fabs(yawd) > 0.001)
+    {
+      px_p = p_x + v / yawd * (sin(yaw + yawd * delta_t) - sin(yaw));
+      py_p = p_y + v / yawd * (cos(yaw) - cos(yaw + yawd * delta_t));
+    }
+    else
+    {
+      px_p = p_x + v * delta_t * cos(yaw);
+      py_p = p_y + v * delta_t * sin(yaw);
+    }
+
+    double v_p = v; // v_dot is 0 so v hasn't changed, assumption of CTRV
+    double yaw_p = yaw + yawd * delta_t;
+    double yawd_p = yawd; // constant turn rate too, so yawd const
+
+    // add the process noise
+    px_p = px_p + 0.5 * nu_a * delta_t * delta_t * cos(yaw);
+    py_p = py_p + 0.5 * nu_a * delta_t * delta_t * sin(yaw);
+    v_p = v_p + nu_a * delta_t;
+
+    yaw_p = yaw_p + 0.5 * delta_t * delta_t * nu_yawdd;
+    yawd_p = yawd_p + delta_t * nu_yawdd;
+
+    // write predicted sigma points into right column
+    Xsig_pred_(0, i) = px_p;
+    Xsig_pred_(1, i) = py_p;
+    Xsig_pred_(2, i) = v_p;
+    Xsig_pred_(3, i) = yaw_p;
+    Xsig_pred_(4, i) = yawd_p;
+  }
+  // print result
+  // std::cout << "Xsig_pred = " << std::endl
+  //           << Xsig_pred_ << std::endl;
+}
+
 }
