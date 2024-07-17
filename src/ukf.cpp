@@ -85,13 +85,104 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
    */
 }
 
-void UKF::UpdateRadar(MeasurementPackage meas_package) {
+void UKF::UpdateRadar(MeasurementPackage meas_package)
+{
   /**
    * TODO: Complete this function! Use radar data to update the belief 
    * about the object's position. Modify the state vector, x_, and 
    * covariance, P_.
    * You can also calculate the radar NIS, if desired.
    */
+  // set number measurement variables
+  int n_z = 3;
+
+  // initial predicted measurement vector
+  z_pred_ = VectorXd(n_z);
+  z_pred_.fill(0.0);
+
+  // initial predicted measurment covariance
+  MatrixXd S = MatrixXd(n_z, n_z);
+  S.fill(0.0);
+
+  // create matrix for sigma points in measurement space
+  Zsig_ = MatrixXd(n_z, 2 * n_aug_ + 1);
+
+  // transform sigma points into measurement space
+  for (int i = 0; i < 2 * n_aug_ + 1; i++)
+  {
+    double px_p = Xsig_pred_(0, i);
+    double py_p = Xsig_pred_(1, i);
+    double v_p = Xsig_pred_(2, i);
+    double psi_p = Xsig_pred_(3, i);
+
+    double rho = sqrt(px_p * px_p + py_p * py_p);
+    double phi = atan2(py_p, px_p);
+    double rho_dot = (px_p * v_p * cos(psi_p) + py_p * v_p * sin(psi_p)) / rho;
+
+    Zsig_.col(i) << rho, phi, rho_dot;
+  }
+
+  for (int i = 0; i < 2 * n_aug_ + 1; i++)
+  {
+    z_pred_ += weights_(i) * Zsig_.col(i);
+  }
+
+  // calculate innovation covariance matrix S
+  MatrixXd R = MatrixXd(n_z, n_z);
+  R << std_radr_ * std_radr_, 0, 0,
+      0, std_radphi_ * std_radphi_, 0,
+      0, 0, std_radrd_ * std_radrd_;
+  S.fill(0.0);
+
+  for (int i = 0; i < 2 * n_aug_ + 1; i++)
+  {
+    S += weights_(i) * (Zsig_.col(i) - z_pred_) * (Zsig_.col(i) - z_pred_).transpose();
+  }
+  S += R;
+
+  // read in actual measurement z (should be k+1)
+  VectorXd z = VectorXd(n_z);
+
+  double rho = meas_package.raw_measurements_[0];
+  double phi = meas_package.raw_measurements_[1];
+  double rho_dot = meas_package.raw_measurements_[2];
+
+  // set the state with the initial location and zero velocity
+  z << rho, phi, rho_dot;
+
+  // create matrix for cross correlation Tc
+  MatrixXd Tc = MatrixXd(n_x_, n_z);
+  Tc.fill(0.0);
+
+  // calculate cross correlation matrix
+  for (int i = 0; i < 2 * n_aug_ + 1; i++)
+  {
+    Tc += weights_(i) * (Xsig_pred_.col(i) - x_) * (Zsig_.col(i) - z_pred_).transpose();
+  }
+  // calculate Kalman gain K;
+  MatrixXd K = MatrixXd(n_x_, n_z);
+  K = Tc * S.inverse();
+
+  // update state mean and covariance matrix
+  x_ = x_ + K * (z - z_pred_);
+  P_ = P_ - K * S * K.transpose();
+  /**
+   * Student part end
+   */
+
+  // print result
+  std::cout << "Updated state x: " << std::endl
+            << x_ << std::endl;
+  std::cout << "Updated state covariance P: " << std::endl
+            << P_ << std::endl;
+
+  // // print result
+  // std::cout << "z_pred: " << std::endl
+  //           << z_pred_ << std::endl;
+  // std::cout << "S: " << std::endl
+  //           << S << std::endl;
+}
+
 void UKF::GenerateAugmentedSigmaPoints()
 {
   // create augmented state vector
