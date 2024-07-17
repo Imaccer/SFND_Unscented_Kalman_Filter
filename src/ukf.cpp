@@ -117,7 +117,19 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
       double v = sqrt(vx * vx + vy * vy);
 
       // set the state with the initial location and zero velocity
-      x_ << px, py, v, 0, 0;
+      // x_ << px, py, v, 0, 0;
+      x_ << px, py, v, rho, rho_dot;
+      // P_ << std_radr_ * std_radr_, 0, 0, 0, 0,
+      //     0, std_radr_ * std_radr_, 0, 0, 0,
+      //     0, 0, std_radrd_ * std_radrd_, 0, 0,
+      //     0, 0, 0, std_radphi_ * std_radphi_, 0,
+      //     0, 0, 0, 0, std_radphi_ * std_radphi_;
+
+      P_ << 1, 0, 0, 0, 0,
+          0, 1, 0, 0, 0,
+          0, 0, 0.5, 0, 0,
+          0, 0, 0, 0.5, 0,
+          0, 0, 0, 0, 0.5;
     }
     else if (meas_package.sensor_type_ == MeasurementPackage::LASER)
     {
@@ -125,13 +137,26 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
       double py = meas_package.raw_measurements_[1];
 
       x_ << px, py, 0, 0, 0;
+
+      // P_ << std_laspx_ * std_laspx_, 0, 0, 0, 0,
+      //     0, std_laspy_ * std_laspy_, 0, 0, 0,
+      //     0, 0, 1, 0, 0,
+      //     0, 0, 0, 1, 0,
+      //     0, 0, 0, 0, 1;
+
+      P_ << 0.5, 0, 0, 0, 0,
+            0, 0.5, 0, 0, 0,
+            0, 0, 100, 0, 0,
+            0, 0, 0, 100, 0,
+            0, 0, 0, 0, 10;
+      
     }
-    // set initial covariance matrix
-    P_ << std_laspx_ * std_laspx_, 0, 0, 0, 0,
-        0, std_laspy_ * std_laspy_, 0, 0, 0,
-        0, 0, std_radr_ * std_radr_, 0, 0,
-        0, 0, 0, std_radphi_ * std_radphi_, 0,
-        0, 0, 0, 0, std_radrd_ * std_radrd_;
+    // // set initial covariance matrix
+    // P_ << std_laspx_ * std_laspx_, 0, 0, 0, 0,
+    //     0, std_laspy_ * std_laspy_, 0, 0, 0,
+    //     0, 0, std_radr_ * std_radr_, 0, 0,
+    //     0, 0, 0, std_radphi_ * std_radphi_, 0,
+    //     0, 0, 0, 0, std_radrd_ * std_radrd_;
 
     previous_timestamp_ = meas_package.timestamp_;
     is_initialized_ = true;
