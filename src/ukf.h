@@ -54,14 +54,31 @@ class UKF {
   // state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   Eigen::VectorXd x_;
 
+  // predicted mean state vector
+  Eigen::VectorXd x_pred_;
+
+  // mean predicted measurement
+  Eigen::VectorXd z_pred_;
+
   // state covariance matrix
   Eigen::MatrixXd P_;
+
+  // predicted covariance matrix
+  Eigen::MatrixXd P_pred_;
+
+  // sigma points matrix
+  Eigen::MatrixXd Xsig_;
 
   // predicted sigma points matrix
   Eigen::MatrixXd Xsig_pred_;
 
+  // predicted measurement sigma points (pred sig points transformed into measurement space)
+  Eigen::MatrixXd Zsig_;
+
   // time when the state is true, in us
   long long time_us_;
+
+  int64_t previous_timestamp_;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
   double std_a_;
