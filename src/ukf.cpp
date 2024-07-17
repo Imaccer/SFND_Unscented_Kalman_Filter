@@ -87,7 +87,7 @@ UKF::UKF()
   weights_ = VectorXd(2 * n_aug_ + 1);
   // set weights
   weights_(0) = lambda_ / (lambda_ + n_aug_);
-  weights_.tail(14).setConstant(1 / (2 * (lambda_ + n_aug_)));
+  weights_.tail(2*n_aug_).setConstant(1 / (2 * (lambda_ + n_aug_)));
 }
 
 UKF::~UKF() {}
